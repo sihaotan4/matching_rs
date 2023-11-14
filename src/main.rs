@@ -32,7 +32,7 @@ impl Rankings {
 
         // while x_available is not empty, continue
         while !x_available.is_empty() {
-            let x = x_available.pop().unwrap();
+            let x = x_available.remove(0).unwrap();
 
             // get x next best target
             // deal with unwrap
