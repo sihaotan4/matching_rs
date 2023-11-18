@@ -1,4 +1,5 @@
 use std::collections::HashMap;
+use std::iter::FromIterator;
 
 struct Matching {
     // acting as a bimap, where each match is entered twice
@@ -43,10 +44,40 @@ struct Rankings {
 }
 
 impl Rankings {
-    fn build_from() -> Rankings {
+    fn from() -> Rankings {
         //build from some kind of input data
         todo!();
     }
+
+    fn to_iterator_map(&self, ranking_type: &str) -> Option<RankingIterMap> {
+        // returns a map of iterators for a specified group (x or y)
+        match ranking_type {
+            "x" => {
+                let iter_map = self
+                .x_ranking
+                .clone()
+                .into_iter()
+                .map(|(key, values)| (key, values.into_iter()))
+                .collect::<RankingIterMap>();
+            Some(iter_map)
+            }
+            "y" => {
+                let iter_map = self
+                .y_ranking
+                .clone()
+                .into_iter()
+                .map(|(key, values)| (key, values.into_iter()))
+                .collect::<RankingIterMap>();
+            Some(iter_map)
+            }
+            _ => None,
+        }
+    }
+
+
+
+
+
 
     fn remove_next_y(&mut self, x: &String) -> Option<String> {
         // for a given "x", fn returns the next preferred "y"
@@ -131,6 +162,24 @@ impl Rankings {
     //     Rankings { x_ranking, y_ranking }
     // }
 
+}
+
+struct RankingIterMap {
+    value: HashMap<String, Box<dyn Iterator<Item = String>>>,
+}
+
+impl FromIterator<(String, std::vec::IntoIter<String>)> for RankingIterMap {
+    fn from_iter<I: IntoIterator<Item=(String, std::vec::IntoIter<String>)>>(iter: I) -> Self {
+        let mut iter_map = RankingIterMap {
+            value: HashMap::new(),
+        };
+
+        for (key, value) in iter {
+            iter_map.value.insert(key, Box::new(value));
+        }
+
+        iter_map
+    }
 }
 
 fn main() {
