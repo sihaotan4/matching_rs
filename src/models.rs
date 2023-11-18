@@ -37,6 +37,11 @@ impl Rankings {
         Ok(Rankings::from_str(&file_content)?)
     }
 
+    fn validate_ranking(&self) -> bool {
+        // checks ranking to see if there are any typos, e.g. team_2 and team2
+        todo!()
+    }
+
     pub fn get_rank(&self, participant: &String, target: &String) -> Option<usize> {
         if let Some(x) = self.map.get(participant) {
             x.into_iter().position(|x| x == target)
@@ -113,7 +118,7 @@ impl Matches {
 
     fn insert(&mut self, x: String, y: String) -> Result<(), &str> {
         if self.map.contains_key(&x) || self.map.contains_key(&y) {
-            return Err("Key already present in HashMap");
+            return Err("Key already present in Matches");
         }
 
         self.map.insert(x.clone(), y.clone());
@@ -123,8 +128,8 @@ impl Matches {
     }
 
     fn remove(&mut self, x: String, y: String) -> Result<(), &str> {
-        if self.map.contains_key(&x) || self.map.contains_key(&y) {
-            return Err("Key already present in HashMap");
+        if !self.map.contains_key(&x) || !self.map.contains_key(&y) {
+            return Err("Match not present in Matches. Cannot remove.");
         }
 
         self.map.remove(&x);
@@ -146,16 +151,101 @@ mod tests {
     use lazy_static::lazy_static;
 
      // Lazy static variable to hold Rankings instance
-     lazy_static! {
-        static ref EMPLOYEE_RANKING: Rankings = Rankings::from_file("test_data/test1.csv")
+    lazy_static! {
+        static ref TEST_RANKING: Rankings = Rankings::from_file("test_data/test1.csv")
             .expect("Failed to initialize Rankings for tests");
     }
 
+    #[test]
+    fn test_ranking_get_rank() {
+        let test_cases = vec![
+            ("alice", "team1", Some(0_usize)),
+            ("bob", "team3", Some(1_usize)),
+            ("charlie", "team3", Some(2_usize)),
+        ];
+
+        for case in test_cases {
+            assert_eq!(TEST_RANKING.get_rank(&case.0.to_string(), &case.1.to_string()), case.2);
+        }
+    }
 
     #[test]
-    fn solve_smp() {
-
-        assert_eq!(true, true);
+    fn test_ranking_prefers_first() {
+        let test_cases = vec![
+            // participant, first target, second target, expected result
+            ("alice", "team1", "team3", true),
+            ("bob", "team3", "team1", false),
+            ("charlie", "team2", "team1", true),
+        ];
+    
+        for (participant, first, second, expected) in test_cases {
+            let result = TEST_RANKING.prefers_first(
+                &participant.to_string(), 
+                &first.to_string(), 
+                &second.to_string()
+            );
+            assert_eq!(result, expected);
+        }
     }
-}
 
+    #[test]
+    fn test_iter_map_next() {
+        let mut iter_map = TEST_RANKING.to_iterator_map();
+
+        let test_cases = vec![
+            ("alice", Some("team1".to_string())),
+            ("alice", Some("team2".to_string())),
+            ("bob", Some("team1".to_string())),
+            ("charlie", Some("team2".to_string())),
+            ("bob", Some("team3".to_string())),
+            ("alice", Some("team3".to_string())),
+            ("alice", None),
+        ];
+
+        for case in test_cases {
+            assert_eq!(iter_map.next(&case.0.to_string()), case.1);
+        }
+    }
+
+    #[test]
+    fn test_insert_matches() {
+        let mut matches = Matches::new();
+
+        // Test inserting a new match
+        assert_eq!(matches.insert("Participant1".to_string(), "Target1".to_string()), Ok(()));
+        assert_eq!(matches.map.get("Participant1"), Some(&"Target1".to_string()));
+        assert_eq!(matches.map.get("Target1"), Some(&"Participant1".to_string()));
+
+        // Test inserting a match with a participant that already exists
+        assert_eq!(matches.insert("Participant1".to_string(), "Target2".to_string()), Err("Key already present in Matches"));
+
+        // Test inserting a match with a target that already exists
+        assert_eq!(matches.insert("Participant2".to_string(), "Target1".to_string()), Err("Key already present in Matches"));
+    }
+
+    #[test]
+    fn test_remove_matches() {
+        let mut matches = Matches::new();
+
+        // Insert a match
+        matches.insert("Participant1".to_string(), "Target1".to_string()).unwrap();
+
+        // Test removing a match that exists
+        assert_eq!(matches.remove("Participant1".to_string(), "Target1".to_string()), Ok(()));
+        assert_eq!(matches.map.get("Participant1"), None);
+        assert_eq!(matches.map.get("Target1"), None);
+
+        // Test removing a match that does not exist
+        assert_eq!(matches.remove("Participant1".to_string(), "Target1".to_string()), Err("Match not present in Matches. Cannot remove."));
+
+        // Insert a match
+        matches.insert("Participant1".to_string(), "Target3".to_string()).unwrap();
+
+        // Test removing a match that partially exists 
+        assert_eq!(matches.remove("Participant1".to_string(), "Target2".to_string()), Err("Match not present in Matches. Cannot remove."));
+
+        // Finally remove it 
+        assert_eq!(matches.remove("Participant1".to_string(), "Target3".to_string()), Ok(()));
+    }
+
+}
