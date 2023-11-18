@@ -1,6 +1,5 @@
 use std::collections::HashMap;
 use std::fs::File;
-use std::fmt;
 use std::io::{self, Read};
 use regex::Regex;
 
@@ -14,28 +13,13 @@ pub struct Rankings {
     map: HashMap<String, Vec<String>>,
 }
 
-#[derive(Debug)]
-pub enum RankingsError {
-    IoError(io::Error),
-    ParsingError(&'static str),
-}
-
-impl fmt::Display for RankingsError {
-    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        match self {
-            RankingsError::IoError(err) => write!(f, "IO Error: {}", err),
-            RankingsError::ParsingError(err) => write!(f, "Parsing Error: {}", err),
-        }
-    }
-}
-
 impl Rankings {
-    fn from_str(input: &str) -> Result<Self, RankingsError> {
+    fn from_str(input: &str) -> Result<Self, regex::Error> {
         let mut map = HashMap::new();
 
-        let line_regex = Regex::new(r#"(?m)^(.+?),(.+)$"#).unwrap();
+        let line_regex = Regex::new(r#"(?m)^(.+?),(.+)$"#)?;
 
-        for capture in line_regex.captures_iter(input) {
+        for capture in line_regex.captures_iter( input) {
             let name = capture[1].to_string();
             let values = capture[2].split(',').map(|s| s.trim().to_string()).collect();
 
@@ -45,9 +29,12 @@ impl Rankings {
         Ok(Rankings { map })
     }
 
-    pub fn from_file(file_path: &str) -> Result<Self, RankingsError> {
-        let file_content = read_file(file_path).map_err(RankingsError::IoError)?;
-        Rankings::from_str(&file_content).map_err(|e| RankingsError::ParsingError(&e.to_string()))
+    pub fn from_file(file_path: &str) -> Result<Self, regex::Error> {
+        // this just panics
+        let file_content = read_file(file_path).unwrap();
+        
+        // this actually propagates regex::Error, todo: custom RankingError enum 
+        Ok(Rankings::from_str(&file_content)?)
     }
 
     pub fn get_rank(&self, participant: &String, target: &String) -> Option<usize> {
