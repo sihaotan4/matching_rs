@@ -1,0 +1,3 @@
+team1,alice,bob,charlie
+team2,charlie,bob,alice
+team3,alice,bob,charlie
