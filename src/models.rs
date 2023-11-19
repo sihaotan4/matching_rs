@@ -139,7 +139,7 @@ pub fn validate_rankings(rankings1: &Rankings, rankings2: &Rankings) -> Result<(
         }
     }
 
-    // Check that all preferences are listed
+    // Checks for duplicate data, resulting in a longer list of preferences
     for (_key, preferences) in &rankings1.map {
         if preferences.len() != keys2.len() {
             return Err("Data input error: Number of preferences does not equal number of entities listed in ranking1");
