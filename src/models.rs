@@ -1,5 +1,5 @@
 use regex::Regex;
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 use std::fmt;
 use std::fs::File;
 use std::io::{self, Read};
@@ -25,7 +25,7 @@ impl fmt::Display for Rankings {
 }
 
 impl Rankings {
-    fn from_str(input: &str) -> Result<Self, regex::Error> {
+    fn from_str(input: &str) -> Result<Self, Box<dyn std::error::Error>> {
         let mut map = HashMap::new();
 
         let line_regex = Regex::new(r#"(?m)^(.+?),(.+)$"#)?;
@@ -37,23 +37,21 @@ impl Rankings {
                 .map(|s| s.trim().to_string())
                 .collect();
 
-            map.insert(name, values);
+            // if this errors, it means the input data is incorrect
+            if map.insert(name.clone(), values).is_some() {
+                return Err(format!("Data input error: Duplicate key: {}", name).into());
+            }
         }
 
         Ok(Rankings { map })
     }
 
-    pub fn from_file(file_path: &str) -> Result<Self, regex::Error> {
+    pub fn from_file(file_path: &str) -> Result<Self, Box<dyn std::error::Error>> {
         // this just panics
         let file_content = read_file(file_path).unwrap();
 
         // this actually propagates regex::Error, todo: custom RankingError enum
         Ok(Rankings::from_str(&file_content)?)
-    }
-
-    fn _validate_ranking(&self) -> bool {
-        // checks ranking to see if there are any typos, e.g. team_2 and team2
-        todo!()
     }
 
     pub fn get_rank(&self, participant: &String, target: &String) -> Option<usize> {
@@ -116,6 +114,47 @@ impl RankingIterMap {
     }
 }
 
+fn read_file(file_path: &str) -> io::Result<String> {
+    let mut file_content = String::new();
+    File::open(file_path)?.read_to_string(&mut file_content)?;
+    Ok(file_content)
+}
+
+pub fn validate_rankings(rankings1: &Rankings, rankings2: &Rankings) -> Result<(), &'static str> {
+    let keys1: HashSet<_> = rankings1.map.keys().collect();
+    let keys2: HashSet<_> = rankings2.map.keys().collect();
+
+    // Check that the set of preferences is exactly the same as the keys in the other Ranking
+    for (_key, preferences) in &rankings1.map {
+        let preferences_set: HashSet<_> = preferences.iter().collect();
+        if preferences_set != keys2 {
+            return Err("Data input error: Preferences in ranking1 are not the same as the entities in ranking2");
+        }
+    }
+
+    for (_key, preferences) in &rankings2.map {
+        let preferences_set: HashSet<_> = preferences.iter().collect();
+        if preferences_set != keys1 {
+            return Err("Data input error: Preferences in ranking2 are not the same as the entities in ranking1");
+        }
+    }
+
+    // Check that all preferences are listed
+    for (_key, preferences) in &rankings1.map {
+        if preferences.len() != keys2.len() {
+            return Err("Data input error: Number of preferences does not equal number of entities listed in ranking1");
+        }
+    }
+
+    for (_key, preferences) in &rankings2.map {
+        if preferences.len() != keys1.len() {
+            return Err("Data input error: Number of preferences does not equal number of entities listed in ranking1");
+        }
+    }
+
+    Ok(())
+}
+
 /**
  * Matches implements a simple bimap.
  * Each match is entered twice. First as (x,y) and then again as (y,x) to facilitate two-way existence checks
@@ -167,12 +206,6 @@ impl Matches {
     pub fn get(&self, key: &String) -> Option<String> {
         self.map.get(key).cloned()
     }
-}
-
-pub fn read_file(file_path: &str) -> io::Result<String> {
-    let mut file_content = String::new();
-    File::open(file_path)?.read_to_string(&mut file_content)?;
-    Ok(file_content)
 }
 
 #[cfg(test)]

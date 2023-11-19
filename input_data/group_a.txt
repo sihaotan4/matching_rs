@@ -1,0 +1,4 @@
+1,A,B,C,D
+2,A,D,C,B
+3,A,C,B,D
+4,A,B,C,D
