@@ -1,12 +1,12 @@
+use regex::Regex;
 use std::collections::HashMap;
+use std::fmt;
 use std::fs::File;
 use std::io::{self, Read};
-use regex::Regex;
-use std::fmt;
 
 /**
  * Rankings stores the preferences of one type of participants in the context of a stable matching problem.
- * For two party matching, two Rankings structs are needed to represent the preferences of both 
+ * For two party matching, two Rankings structs are needed to represent the preferences of both
  * participant types.
  */
 #[derive(Debug)]
@@ -30,9 +30,12 @@ impl Rankings {
 
         let line_regex = Regex::new(r#"(?m)^(.+?),(.+)$"#)?;
 
-        for capture in line_regex.captures_iter( input) {
+        for capture in line_regex.captures_iter(input) {
             let name = capture[1].to_string();
-            let values = capture[2].split(',').map(|s| s.trim().to_string()).collect();
+            let values = capture[2]
+                .split(',')
+                .map(|s| s.trim().to_string())
+                .collect();
 
             map.insert(name, values);
         }
@@ -43,8 +46,8 @@ impl Rankings {
     pub fn from_file(file_path: &str) -> Result<Self, regex::Error> {
         // this just panics
         let file_content = read_file(file_path).unwrap();
-        
-        // this actually propagates regex::Error, todo: custom RankingError enum 
+
+        // this actually propagates regex::Error, todo: custom RankingError enum
         Ok(Rankings::from_str(&file_content)?)
     }
 
@@ -64,7 +67,7 @@ impl Rankings {
     pub fn prefers_first(&self, participant: &String, first: &String, second: &String) -> bool {
         let first_rank = self.get_rank(participant, first).unwrap();
         let second_rank = self.get_rank(participant, second).unwrap();
-        
+
         if first_rank < second_rank {
             true
         } else if first_rank > second_rank {
@@ -81,14 +84,13 @@ impl Rankings {
             .into_iter()
             .map(|(key, values)| (key, values.into_iter()))
             .collect::<RankingIterMap>();
-        
+
         iter_map
     }
 
     pub fn get_keys(&self) -> Vec<String> {
         self.map.keys().cloned().collect::<Vec<String>>()
     }
-
 }
 
 pub struct RankingIterMap {
@@ -96,7 +98,7 @@ pub struct RankingIterMap {
 }
 
 impl FromIterator<(String, std::vec::IntoIter<String>)> for RankingIterMap {
-    fn from_iter<I: IntoIterator<Item=(String, std::vec::IntoIter<String>)>>(iter: I) -> Self {
+    fn from_iter<I: IntoIterator<Item = (String, std::vec::IntoIter<String>)>>(iter: I) -> Self {
         let mut iter_map = RankingIterMap {
             map: HashMap::new(),
         };
@@ -110,9 +112,7 @@ impl FromIterator<(String, std::vec::IntoIter<String>)> for RankingIterMap {
 }
 impl RankingIterMap {
     pub fn next(&mut self, participant: &String) -> Option<String> {
-        self.map
-            .get_mut(participant)
-            .and_then(|iter| iter.next())
+        self.map.get_mut(participant).and_then(|iter| iter.next())
     }
 }
 
@@ -149,7 +149,7 @@ impl Matches {
 
         self.map.insert(x.clone(), y.clone());
         self.map.insert(y.clone(), x.clone());
-    
+
         Ok(())
     }
 
@@ -167,7 +167,6 @@ impl Matches {
     pub fn get(&self, key: &String) -> Option<String> {
         self.map.get(key).cloned()
     }
-
 }
 
 pub fn read_file(file_path: &str) -> io::Result<String> {
@@ -181,9 +180,9 @@ mod tests {
     use super::*;
     use lazy_static::lazy_static;
 
-     // Lazy static variable to hold Rankings instance
+    // Lazy static variable to hold Rankings instance
     lazy_static! {
-        static ref TEST_RANKING: Rankings = Rankings::from_file("test_data/unit_tests.csv")
+        static ref TEST_RANKING: Rankings = Rankings::from_file("test_data/unit_test_a.txt")
             .expect("Failed to initialize Rankings for tests");
     }
 
@@ -196,7 +195,10 @@ mod tests {
         ];
 
         for case in test_cases {
-            assert_eq!(TEST_RANKING.get_rank(&case.0.to_string(), &case.1.to_string()), case.2);
+            assert_eq!(
+                TEST_RANKING.get_rank(&case.0.to_string(), &case.1.to_string()),
+                case.2
+            );
         }
     }
 
@@ -208,12 +210,12 @@ mod tests {
             ("bob", "team3", "team1", false),
             ("charlie", "team2", "team1", true),
         ];
-    
+
         for (participant, first, second, expected) in test_cases {
             let result = TEST_RANKING.prefers_first(
-                &participant.to_string(), 
-                &first.to_string(), 
-                &second.to_string()
+                &participant.to_string(),
+                &first.to_string(),
+                &second.to_string(),
             );
             assert_eq!(result, expected);
         }
@@ -243,15 +245,30 @@ mod tests {
         let mut matches = Matches::new();
 
         // Test inserting a new match
-        assert_eq!(matches.insert(&"Participant1".to_string(), &"Target1".to_string()), Ok(()));
-        assert_eq!(matches.get(&"Participant1".to_string()), Some("Target1".to_string()));
-        assert_eq!(matches.get(&"Target1".to_string()), Some("Participant1".to_string()));
+        assert_eq!(
+            matches.insert(&"Participant1".to_string(), &"Target1".to_string()),
+            Ok(())
+        );
+        assert_eq!(
+            matches.get(&"Participant1".to_string()),
+            Some("Target1".to_string())
+        );
+        assert_eq!(
+            matches.get(&"Target1".to_string()),
+            Some("Participant1".to_string())
+        );
 
         // Test inserting a match with a participant that already exists
-        assert_eq!(matches.insert(&"Participant1".to_string(), &"Target2".to_string()), Err("Key already present in Matches"));
+        assert_eq!(
+            matches.insert(&"Participant1".to_string(), &"Target2".to_string()),
+            Err("Key already present in Matches")
+        );
 
         // Test inserting a match with a target that already exists
-        assert_eq!(matches.insert(&"Participant2".to_string(), &"Target1".to_string()), Err("Key already present in Matches"));
+        assert_eq!(
+            matches.insert(&"Participant2".to_string(), &"Target1".to_string()),
+            Err("Key already present in Matches")
+        );
     }
 
     #[test]
@@ -259,24 +276,39 @@ mod tests {
         let mut matches = Matches::new();
 
         // Insert a match
-        matches.insert(&"Participant1".to_string(), &"Target1".to_string()).unwrap();
+        matches
+            .insert(&"Participant1".to_string(), &"Target1".to_string())
+            .unwrap();
 
         // Test removing a match that exists
-        assert_eq!(matches.remove(&"Participant1".to_string(), &"Target1".to_string()), Ok(()));
+        assert_eq!(
+            matches.remove(&"Participant1".to_string(), &"Target1".to_string()),
+            Ok(())
+        );
         assert_eq!(matches.map.get("Participant1"), None);
         assert_eq!(matches.map.get("Target1"), None);
 
         // Test removing a match that does not exist
-        assert_eq!(matches.remove(&"Participant1".to_string(), &"Target1".to_string()), Err("Match not present in Matches. Cannot remove."));
+        assert_eq!(
+            matches.remove(&"Participant1".to_string(), &"Target1".to_string()),
+            Err("Match not present in Matches. Cannot remove.")
+        );
 
         // Insert a match
-        matches.insert(&"Participant1".to_string(), &"Target3".to_string()).unwrap();
+        matches
+            .insert(&"Participant1".to_string(), &"Target3".to_string())
+            .unwrap();
 
-        // Test removing a match that partially exists 
-        assert_eq!(matches.remove(&"Participant1".to_string(), &"Target2".to_string()), Err("Match not present in Matches. Cannot remove."));
+        // Test removing a match that partially exists
+        assert_eq!(
+            matches.remove(&"Participant1".to_string(), &"Target2".to_string()),
+            Err("Match not present in Matches. Cannot remove.")
+        );
 
-        // Finally remove it 
-        assert_eq!(matches.remove(&"Participant1".to_string(), &"Target3".to_string()), Ok(()));
+        // Finally remove it
+        assert_eq!(
+            matches.remove(&"Participant1".to_string(), &"Target3".to_string()),
+            Ok(())
+        );
     }
-
 }

@@ -2,11 +2,11 @@ use crate::models::{Matches, Rankings};
 
 // Problem is couched to map employees to vacancies
 // In this scenario the vacancies (teams) are proposing, employees choose to accept
-pub fn gale_shapley(vacancies:Rankings, employees:Rankings) -> Matches {
+pub fn gale_shapley(vacancies: Rankings, employees: Rankings) -> Matches {
     let mut matches = Matches::new();
 
     let mut available_vacancies = vacancies.get_keys();
-    let mut vacancies_iter = vacancies.to_iterator_map(); 
+    let mut vacancies_iter = vacancies.to_iterator_map();
 
     // while vacancies still remain
     while !available_vacancies.is_empty() {
@@ -17,7 +17,7 @@ pub fn gale_shapley(vacancies:Rankings, employees:Rankings) -> Matches {
 
         // insertion fails then that employee had already been matched
         if let Err(_) = matches.insert(&vacancy_to_fill, &employee) {
-            let current_match =matches.get(&employee).unwrap();
+            let current_match = matches.get(&employee).unwrap();
 
             // check if the employee's current match is stable
             if employees.prefers_first(&employee, &current_match, &vacancy_to_fill) {
@@ -44,17 +44,23 @@ mod tests {
 
     #[test]
     fn test_gale_shapley() {
-        let employee_ranking  = Rankings::from_file("test_data/gs_test_employees.txt")
+        let employee_ranking = Rankings::from_file("test_data/unit_test_a.txt")
             .expect("Failed to initialize Rankings");
 
-        let team_ranking  = Rankings::from_file("test_data/gs_test_vacancies.txt")
+        let team_ranking = Rankings::from_file("test_data/unit_test_b.txt")
             .expect("Failed to initialize Rankings");
-        
+
         let matches = gale_shapley(employee_ranking, team_ranking);
 
         // Check if the matches are stable
-        assert_eq!(matches.get(&"alice".to_string()), Some("team1".to_string()));
-        assert_eq!(matches.get(&"team2".to_string()), Some("charlie".to_string()));
+        assert_eq!(
+            matches.get(&"alice".to_string()), 
+            Some("team1".to_string())
+        );
+        assert_eq!(
+            matches.get(&"team2".to_string()),
+            Some("charlie".to_string())
+        );
         assert_eq!(matches.get(&"bob".to_string()), Some("team3".to_string()));
     }
 }
