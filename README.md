@@ -10,4 +10,4 @@ It implements an ergonomic API for the developing stable matching algorithms.
     - [ ] Create another validator to check for asymmetric inputs
 - [ ] Implement scoring of matching results
     - [ ] Improve Matching struct to deduplicate matches and improve ergonomics with iter methods
-
+- [ ] Check Matching stability with check_stability() method
