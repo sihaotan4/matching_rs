@@ -2,7 +2,7 @@ use regex::Regex;
 use std::collections::{HashMap, HashSet};
 use std::fmt;
 use std::fs::File;
-use std::io::{self, Read};
+use std::io::Read;
 
 /**
  * Rankings stores the preferences of one type of participants in the context of a stable matching problem.
@@ -25,7 +25,8 @@ impl fmt::Display for Rankings {
 }
 
 impl Rankings {
-    fn from_str(input: &str) -> Result<Self, Box<dyn std::error::Error>> {
+    // Rankings has two constructors, 'from_str' and 'from_file'
+    pub fn from_str(input: &str) -> Result<Self, Box<dyn std::error::Error>> {
         let mut map = HashMap::new();
 
         let line_regex = Regex::new(r#"(?m)^(.+?),(.+)$"#)?;
@@ -47,8 +48,8 @@ impl Rankings {
     }
 
     pub fn from_file(file_path: &str) -> Result<Self, Box<dyn std::error::Error>> {
-        // this just panics
-        let file_content = read_file(file_path).unwrap();
+        let mut file_content = String::new();
+        File::open(file_path)?.read_to_string(&mut file_content)?;
 
         // this actually propagates regex::Error, todo: custom RankingError enum
         Ok(Rankings::from_str(&file_content)?)
@@ -112,12 +113,6 @@ impl RankingIterMap {
     pub fn next(&mut self, participant: &String) -> Option<String> {
         self.map.get_mut(participant).and_then(|iter| iter.next())
     }
-}
-
-fn read_file(file_path: &str) -> io::Result<String> {
-    let mut file_content = String::new();
-    File::open(file_path)?.read_to_string(&mut file_content)?;
-    Ok(file_content)
 }
 
 pub fn validate_rankings(rankings1: &Rankings, rankings2: &Rankings) -> Result<(), &'static str> {
