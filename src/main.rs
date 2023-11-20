@@ -19,7 +19,7 @@ fn main() {
     let matches = gale_shapley(&proposers, &acceptors).unwrap();
 
     println!(
-        "{:?}",
+        "{:#?}",
         matches.unique_matches(&proposers, &acceptors, "acceptors")
     );
 }

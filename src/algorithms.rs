@@ -3,7 +3,7 @@ use crate::models::{Matches, Rankings};
 
 pub fn gale_shapley(proposers: &Rankings, acceptors: &Rankings) -> Result<Matches, &'static str> {
     // checks if both Ranking structs are set up for gale_shapley assumptions
-    check_ranking_symmetry(&proposers, &acceptors)?;
+    check_ranking_symmetry(proposers, acceptors)?;
 
     let mut matches = Matches::new();
 
@@ -19,7 +19,7 @@ pub fn gale_shapley(proposers: &Rankings, acceptors: &Rankings) -> Result<Matche
         let acceptor = proposers_iter.next(&proposer).unwrap();
 
         // check if insertion fails, if failed then that acceptor had already been matched
-        if let Err(_) = matches.insert(&proposer, &acceptor) {
+        if matches.insert(&proposer, &acceptor).is_err() {
             // find the proposer that is currently matched with this acceptor
             let incumbent_proposer = matches.get(&acceptor).unwrap();
 

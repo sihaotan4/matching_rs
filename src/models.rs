@@ -16,9 +16,9 @@ pub struct Rankings {
 
 impl fmt::Display for Rankings {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{{\n")?;
+        writeln!(f, "{{")?;
         for (key, value) in &self.map {
-            write!(f, "    {}: {:?},\n", key, value)?;
+            writeln!(f, "    {}: {:?},", key, value)?;
         }
         write!(f, "}}")
     }
@@ -52,12 +52,13 @@ impl Rankings {
         File::open(file_path)?.read_to_string(&mut file_content)?;
 
         // this actually propagates regex::Error, todo: custom RankingError enum
-        Ok(Rankings::from_str(&file_content)?)
+        let ranking_result = Rankings::from_str(&file_content)?;
+        Ok(ranking_result)
     }
 
     pub fn get_rank(&self, participant: &String, target: &String) -> Option<usize> {
         if let Some(x) = self.map.get(participant) {
-            x.into_iter().position(|x| x == target)
+            x.iter().position(|x| x == target)
         } else {
             None
         }
@@ -67,24 +68,19 @@ impl Rankings {
         let first_rank = self.get_rank(participant, first).unwrap();
         let second_rank = self.get_rank(participant, second).unwrap();
 
-        if first_rank < second_rank {
-            true
-        } else if first_rank > second_rank {
-            false
-        } else {
-            panic!("Equal ranks should not be possible")
+        match first_rank.cmp(&second_rank) {
+            std::cmp::Ordering::Less => true,
+            std::cmp::Ordering::Greater => false,
+            std::cmp::Ordering::Equal => panic!("Equal ranks should not be possible"),
         }
     }
 
     pub fn to_iterator_map(&self) -> RankingIterMap {
-        let iter_map = self
-            .map
+        self.map
             .clone()
             .into_iter()
             .map(|(key, values)| (key, values.into_iter()))
-            .collect::<RankingIterMap>();
-
-        iter_map
+            .collect::<RankingIterMap>()
     }
 
     pub fn get_keys(&self) -> Vec<String> {
@@ -129,12 +125,12 @@ pub struct Matches {
 }
 
 impl fmt::Display for Matches {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{{\n")?;
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        writeln!(f, "{{")?;
         for (key, value) in &self.map {
-            write!(f, "    {}: {},\n", key, value)?;
+            writeln!(f, "    {}: {},", key, value)?;
         }
-        write!(f, "}}")
+        writeln!(f, "{{")
     }
 }
 
@@ -177,22 +173,14 @@ impl Matches {
         acceptors: &Rankings,
         select_type: &str,
     ) -> HashMap<&String, &String> {
-        let mut selected_keys = Vec::new();
-
-        match select_type {
-            "proposers" => {
-                selected_keys = proposers.get_keys();
-            }
-            "acceptors" => {
-                selected_keys = acceptors.get_keys();
-            }
-            "all" => {
-                selected_keys = self.map.keys().cloned().collect();
-            }
+        let selected_keys: Vec<_> = match select_type {
+            "proposers" => proposers.get_keys(),
+            "acceptors" => acceptors.get_keys(),
+            "all" => self.map.keys().cloned().collect(),
             _ => {
-                return HashMap::new();
+                Vec::new() // Return an empty vector when select_type is not one of "proposers", "acceptors", or "all"
             }
-        }
+        };
 
         self.map
             .iter()
