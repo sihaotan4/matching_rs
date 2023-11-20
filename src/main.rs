@@ -4,19 +4,24 @@ use models::Rankings;
 mod algorithms;
 use algorithms::gale_shapley;
 
-fn main() {
-    let proposers =
-        Rankings::from_file("input_data/group_a.txt").expect("Failed to initialize Rankings from file");
+mod checks;
 
-    let acceptors =
-        Rankings::from_file("input_data/group_b.txt").expect("Failed to initialize Rankings from file");
+fn main() {
+    let proposers = Rankings::from_file("input_data/group_a.txt")
+        .expect("Failed to initialize Rankings from file");
+
+    let acceptors = Rankings::from_file("input_data/group_b.txt")
+        .expect("Failed to initialize Rankings from file");
 
     println!("{}", proposers);
     println!("{}", acceptors);
 
-    let matches = gale_shapley(proposers, acceptors).unwrap();
+    let matches = gale_shapley(&proposers, &acceptors).unwrap();
 
-    println!("{}", matches);
+    println!(
+        "{:?}",
+        matches.unique_matches(&proposers, &acceptors, "acceptors")
+    );
 }
 
 //For these preference lists, there are exactly two stable pairings:

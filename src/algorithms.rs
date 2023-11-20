@@ -1,8 +1,9 @@
-use crate::models::{validate_rankings, Matches, Rankings};
+use crate::checks::check_ranking_symmetry;
+use crate::models::{Matches, Rankings};
 
-pub fn gale_shapley(proposers: Rankings, acceptors: Rankings) -> Result<Matches, &'static str> {
+pub fn gale_shapley(proposers: &Rankings, acceptors: &Rankings) -> Result<Matches, &'static str> {
     // checks if both Ranking structs are set up for gale_shapley assumptions
-    validate_rankings(&proposers, &acceptors)?;
+    check_ranking_symmetry(&proposers, &acceptors)?;
 
     let mut matches = Matches::new();
 
@@ -47,13 +48,13 @@ mod tests {
 
     #[test]
     fn test_gale_shapley() {
-        let employee_ranking = Rankings::from_file("test_data/unit_test_a.txt")
+        let proposers = Rankings::from_file("test_data/unit_test_a.txt")
             .expect("Failed to initialize Rankings");
 
-        let team_ranking = Rankings::from_file("test_data/unit_test_b.txt")
+        let acceptors = Rankings::from_file("test_data/unit_test_b.txt")
             .expect("Failed to initialize Rankings");
 
-        let matches = gale_shapley(employee_ranking, team_ranking).unwrap();
+        let matches = gale_shapley(&proposers, &acceptors).unwrap();
 
         // Check if the matches are stable
         assert_eq!(matches.get(&"alice".to_string()), Some("team1".to_string()));

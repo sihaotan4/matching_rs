@@ -1,5 +1,5 @@
 use regex::Regex;
-use std::collections::{HashMap, HashSet};
+use std::collections::HashMap;
 use std::fmt;
 use std::fs::File;
 use std::io::Read;
@@ -90,6 +90,10 @@ impl Rankings {
     pub fn get_keys(&self) -> Vec<String> {
         self.map.keys().cloned().collect::<Vec<String>>()
     }
+
+    pub fn get_map(&self) -> &HashMap<String, Vec<String>> {
+        &self.map
+    }
 }
 
 pub struct RankingIterMap {
@@ -113,41 +117,6 @@ impl RankingIterMap {
     pub fn next(&mut self, participant: &String) -> Option<String> {
         self.map.get_mut(participant).and_then(|iter| iter.next())
     }
-}
-
-pub fn validate_rankings(rankings1: &Rankings, rankings2: &Rankings) -> Result<(), &'static str> {
-    let keys1: HashSet<_> = rankings1.map.keys().collect();
-    let keys2: HashSet<_> = rankings2.map.keys().collect();
-
-    // Check that the set of preferences is exactly the same as the keys in the other Ranking
-    for (_key, preferences) in &rankings1.map {
-        let preferences_set: HashSet<_> = preferences.iter().collect();
-        if preferences_set != keys2 {
-            return Err("Data input error: Preferences in ranking1 are not the same as the entities in ranking2");
-        }
-    }
-
-    for (_key, preferences) in &rankings2.map {
-        let preferences_set: HashSet<_> = preferences.iter().collect();
-        if preferences_set != keys1 {
-            return Err("Data input error: Preferences in ranking2 are not the same as the entities in ranking1");
-        }
-    }
-
-    // Checks for duplicate data, resulting in a longer list of preferences
-    for (_key, preferences) in &rankings1.map {
-        if preferences.len() != keys2.len() {
-            return Err("Data input error: Number of preferences does not equal number of entities listed in ranking1");
-        }
-    }
-
-    for (_key, preferences) in &rankings2.map {
-        if preferences.len() != keys1.len() {
-            return Err("Data input error: Number of preferences does not equal number of entities listed in ranking1");
-        }
-    }
-
-    Ok(())
 }
 
 /**
@@ -200,6 +169,35 @@ impl Matches {
 
     pub fn get(&self, key: &String) -> Option<String> {
         self.map.get(key).cloned()
+    }
+
+    pub fn unique_matches(
+        &self,
+        proposers: &Rankings,
+        acceptors: &Rankings,
+        select_type: &str,
+    ) -> HashMap<&String, &String> {
+        let mut selected_keys = Vec::new();
+
+        match select_type {
+            "proposers" => {
+                selected_keys = proposers.get_keys();
+            }
+            "acceptors" => {
+                selected_keys = acceptors.get_keys();
+            }
+            "all" => {
+                selected_keys = self.map.keys().cloned().collect();
+            }
+            _ => {
+                return HashMap::new();
+            }
+        }
+
+        self.map
+            .iter()
+            .filter(|map| selected_keys.contains(map.0))
+            .collect::<HashMap<&String, &String>>()
     }
 }
 
