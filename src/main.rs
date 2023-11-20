@@ -1,4 +1,6 @@
 mod models;
+use std::collections::BTreeMap;
+
 use models::Rankings;
 
 mod algorithms;
@@ -18,10 +20,14 @@ fn main() {
 
     let matches = gale_shapley(&proposers, &acceptors).unwrap();
 
-    println!(
-        "{:#?}",
-        matches.unique_matches(&proposers, &acceptors, "acceptors")
-    );
+    let sorted_matches: BTreeMap<_, _> = matches
+        .unique_matches(&proposers, &acceptors, "proposers")
+        .into_iter()
+        .collect();
+
+    for (key, value) in &sorted_matches {
+        println!("{}: {}", key, value);
+    }
 }
 
 //For these preference lists, there are exactly two stable pairings:
