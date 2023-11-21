@@ -1,0 +1,5 @@
+alice,1sales,2design,3strategy,4finance,5research
+bob,5research,2design
+clare,3strategy,1sales,2design
+dave,2design,3strategy,4finance
+ethan,2design,3strategy,4finance,1sales

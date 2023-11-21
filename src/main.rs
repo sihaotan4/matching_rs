@@ -4,27 +4,28 @@ use std::collections::BTreeMap;
 use models::Rankings;
 
 mod algorithms;
-use algorithms::gale_shapley;
+use algorithms::{run_gale_shapley, run_deferred_acceptance};
 
 mod checks;
 
 fn main() {
-    let proposers = Rankings::from_file("input_data/group_a.txt")
+    let proposers = Rankings::from_file("input_data/complex_a.txt")
         .expect("Failed to initialize Rankings from file");
 
-    let acceptors = Rankings::from_file("input_data/group_b.txt")
+    let acceptors = Rankings::from_file("input_data/complex_b.txt")
         .expect("Failed to initialize Rankings from file");
 
     println!("{}", proposers);
     println!("{}", acceptors);
 
-    let matches = gale_shapley(&proposers, &acceptors).unwrap();
+    let matches = run_deferred_acceptance(&proposers, &acceptors).unwrap();
 
     let sorted_matches: BTreeMap<_, _> = matches
         .unique_matches(&proposers, &acceptors, "proposers")
         .into_iter()
         .collect();
 
+    println!("Stable matching: ");
     for (key, value) in &sorted_matches {
         println!("{}: {}", key, value);
     }

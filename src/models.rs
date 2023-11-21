@@ -64,13 +64,13 @@ impl Rankings {
         }
     }
 
-    pub fn prefers_first(&self, participant: &String, first: &String, second: &String) -> bool {
-        let first_rank = self.get_rank(participant, first).unwrap();
-        let second_rank = self.get_rank(participant, second).unwrap();
+    pub fn prefers_first(&self, participant: &String, first: &String, second: &String) -> Option<bool> {
+        let first_rank = self.get_rank(participant, first)?;
+        let second_rank = self.get_rank(participant, second)?;
 
         match first_rank.cmp(&second_rank) {
-            std::cmp::Ordering::Less => true,
-            std::cmp::Ordering::Greater => false,
+            std::cmp::Ordering::Less => Some(true),
+            std::cmp::Ordering::Greater => Some(false),
             std::cmp::Ordering::Equal => panic!("Equal ranks should not be possible"),
         }
     }
@@ -231,7 +231,7 @@ mod tests {
                 &first.to_string(),
                 &second.to_string(),
             );
-            assert_eq!(result, expected);
+            assert_eq!(result, Some(expected));
         }
     }
 
