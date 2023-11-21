@@ -1,7 +1,12 @@
+use core::panic;
+
 use crate::checks::check_ranking_symmetry;
 use crate::models::{Matches, Rankings};
 
-pub fn run_gale_shapley(proposers: &Rankings, acceptors: &Rankings) -> Result<Matches, &'static str> {
+pub fn run_gale_shapley(
+    proposers: &Rankings,
+    acceptors: &Rankings,
+) -> Result<Matches, &'static str> {
     // checks if both Ranking structs are set up for gale_shapley assumptions
     check_ranking_symmetry(proposers, acceptors)?;
 
@@ -25,7 +30,10 @@ pub fn run_gale_shapley(proposers: &Rankings, acceptors: &Rankings) -> Result<Ma
 
             // check if the current match is stable
             // in a clean symmetrical problem this will not return None
-            if acceptors.prefers_first(&acceptor, &incumbent_proposer, &proposer).unwrap() {
+            if acceptors
+                .prefers_first(&acceptor, &incumbent_proposer, &proposer)
+                .unwrap()
+            {
                 // if stable, the proposal challenge is unsuccessful and they return to the pool
                 available_proposers.push(proposer);
 
@@ -43,7 +51,10 @@ pub fn run_gale_shapley(proposers: &Rankings, acceptors: &Rankings) -> Result<Ma
     Ok(matches)
 }
 
-pub fn run_deferred_acceptance(proposers: &Rankings, acceptors: &Rankings) -> Result<Matches, &'static str> {
+pub fn run_deferred_acceptance(
+    proposers: &Rankings,
+    acceptors: &Rankings,
+) -> Result<Matches, &'static str> {
     // todo! symmetry not required but input checks are impt
     // check_ranking_symmetry(proposers, acceptors)?;
 
@@ -60,19 +71,19 @@ pub fn run_deferred_acceptance(proposers: &Rankings, acceptors: &Rankings) -> Re
         let acceptor = match proposers_iter.next(&proposer) {
             Some(acceptor) => acceptor,
             None => {
-                // if None, do not push him back into available_proposers,
+                // out of preferences, do not push him back into available_proposers,
                 continue;
-            },
+            }
         };
 
         // check if the acceptor even has a preference for the proposer
         if acceptors.get_rank(&acceptor, &proposer).is_none() {
-            // do not insert match and just return the proposed to the pool
+            // just return the proposer to the pool
             available_proposers.push(proposer);
             continue;
         }
 
-        // check if insertion fails, meaning that this acceptor had already been matched
+        // check if insertion fails, meaning that this acceptor has already been matched
         if matches.insert(&proposer, &acceptor).is_err() {
             // find the proposer that is currently matched with this acceptor
             let incumbent_proposer = matches.get(&acceptor).unwrap();
@@ -82,7 +93,7 @@ pub fn run_deferred_acceptance(proposers: &Rankings, acceptors: &Rankings) -> Re
                 Some(true) => {
                     // current match is stable, the proposer is unsuccessful and returns to the pool
                     available_proposers.push(proposer);
-                },
+                }
                 Some(false) => {
                     // current match is unstable, and they can trade up
                     matches.remove(&incumbent_proposer, &acceptor).unwrap();
@@ -90,24 +101,19 @@ pub fn run_deferred_acceptance(proposers: &Rankings, acceptors: &Rankings) -> Re
 
                     // incumbent returns to the pool
                     available_proposers.push(incumbent_proposer);
-                },
+                }
                 None => {
-                    // the acceptor has no declared ranking for our proposer at all and returns to the pool
-                    // todo this branch should not be reached because we check get_rank already
-                    available_proposers.push(proposer);
-                },
+                    // this branch should not be reached since we checked already
+                    panic!("logic error");
+                }
             };
-
-        }
-        else {
+        } else {
             // match insert succeeds, continue
             continue;
         }
-        
     }
     Ok(matches)
 }
-
 
 #[cfg(test)]
 mod tests {

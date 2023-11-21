@@ -64,7 +64,12 @@ impl Rankings {
         }
     }
 
-    pub fn prefers_first(&self, participant: &String, first: &String, second: &String) -> Option<bool> {
+    pub fn prefers_first(
+        &self,
+        participant: &String,
+        first: &String,
+        second: &String,
+    ) -> Option<bool> {
         let first_rank = self.get_rank(participant, first)?;
         let second_rank = self.get_rank(participant, second)?;
 
