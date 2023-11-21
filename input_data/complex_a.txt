@@ -1,5 +1,5 @@
-1sales,clare,bob,ethan
-2design,ethan,dave,alice
-3strategy,bob,clare,dave
+1sales,alice,ethan,bob
+2design,alice,ethan,dave
+3strategy,bob,clare,dave,alice
 4finance,alice,ethan,bob
 5research,alice,ethan

@@ -176,7 +176,7 @@ impl Matches {
         let selected_keys: Vec<_> = match select_type {
             "proposers" => proposers.get_keys(),
             "acceptors" => acceptors.get_keys(),
-            "all" => self.map.keys().cloned().collect(),
+            //"all" => self.map.keys().cloned().collect(),
             _ => {
                 Vec::new() // Return an empty vector when select_type is not one of "proposers", "acceptors", or "all"
             }
@@ -186,6 +186,14 @@ impl Matches {
             .iter()
             .filter(|map| selected_keys.contains(map.0))
             .collect::<HashMap<&String, &String>>()
+    }
+
+    pub fn unmatched(
+        &self,
+        proposers: &Rankings,
+        acceptors: &Rankings,
+    ) -> HashMap<&String, &String> {
+        todo!()
     }
 }
 

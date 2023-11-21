@@ -21,7 +21,7 @@ fn main() {
     let matches = run_deferred_acceptance(&proposers, &acceptors).unwrap();
 
     let sorted_matches: BTreeMap<_, _> = matches
-        .unique_matches(&proposers, &acceptors, "proposers")
+        .unique_matches(&proposers, &acceptors, "acceptors")
         .into_iter()
         .collect();
 
@@ -31,6 +31,6 @@ fn main() {
     }
 }
 
-//For these preference lists, there are exactly two stable pairings:
+//For these simple lists, there are exactly two stable pairings:
 // S = {(1,A), (2,D), (3,C), (4,B)}
 // T = {(1,A), (2,C), (3,D), (4,B)}

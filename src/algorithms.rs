@@ -60,11 +60,17 @@ pub fn run_deferred_acceptance(proposers: &Rankings, acceptors: &Rankings) -> Re
         let acceptor = match proposers_iter.next(&proposer) {
             Some(acceptor) => acceptor,
             None => {
-                // if None, do not push him back into available_proposers
-                // as an optimization, consider iter.peek in the next nested if block instead of this
+                // if None, do not push him back into available_proposers,
                 continue;
             },
         };
+
+        // check if the acceptor even has a preference for the proposer
+        if acceptors.get_rank(&acceptor, &proposer).is_none() {
+            // do not insert match and just return the proposed to the pool
+            available_proposers.push(proposer);
+            continue;
+        }
 
         // check if insertion fails, meaning that this acceptor had already been matched
         if matches.insert(&proposer, &acceptor).is_err() {
@@ -72,7 +78,7 @@ pub fn run_deferred_acceptance(proposers: &Rankings, acceptors: &Rankings) -> Re
             let incumbent_proposer = matches.get(&acceptor).unwrap();
 
             // check if the current match is stable
-            let prefers = match acceptors.prefers_first(&acceptor, &incumbent_proposer, &proposer) {
+            match acceptors.prefers_first(&acceptor, &incumbent_proposer, &proposer) {
                 Some(true) => {
                     // current match is stable, the proposer is unsuccessful and returns to the pool
                     available_proposers.push(proposer);
@@ -87,6 +93,7 @@ pub fn run_deferred_acceptance(proposers: &Rankings, acceptors: &Rankings) -> Re
                 },
                 None => {
                     // the acceptor has no declared ranking for our proposer at all and returns to the pool
+                    // todo this branch should not be reached because we check get_rank already
                     available_proposers.push(proposer);
                 },
             };
