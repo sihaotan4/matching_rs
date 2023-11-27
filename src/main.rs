@@ -4,7 +4,7 @@ use std::collections::BTreeMap;
 use models::Rankings;
 
 mod algorithms;
-use algorithms::{run_deferred_acceptance, run_gale_shapley};
+use algorithms::run_deferred_acceptance;
 
 mod checks;
 

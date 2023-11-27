@@ -193,13 +193,13 @@ impl Matches {
             .collect::<HashMap<&String, &String>>()
     }
 
-    pub fn unmatched(
-        &self,
-        proposers: &Rankings,
-        acceptors: &Rankings,
-    ) -> HashMap<&String, &String> {
-        todo!()
-    }
+    // pub fn unmatched(
+    //     &self,
+    //     proposers: &Rankings,
+    //     acceptors: &Rankings,
+    // ) -> HashMap<&String, &String> {
+    //     todo!()
+    // }
 }
 
 #[cfg(test)]
